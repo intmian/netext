@@ -1,0 +1,4 @@
+github.com/intmian/mian_go_lib v0.0.0-20231128091008-b7db20e91581 h1:JRtkWXbzScujvhPbwVRI4X/5Lzg+jtgJHkvdKg4A8gU=
+github.com/intmian/mian_go_lib v0.0.0-20231128091008-b7db20e91581/go.mod h1:VQMC7sRfNjMoczDkFTtG5vqTrTJcuRycrtPViqFnnZo=
+github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
+github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
