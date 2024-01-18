@@ -1,16 +1,16 @@
 package netext
 
 import (
+	"errors"
 	"github.com/intmian/mian_go_lib/tool/misc"
 )
 
 // NetExt 网络管理器
 type NetExt struct {
-	setting Setting
 	misc.InitTag
 }
 
-func (n *NetExt) Init(setting Setting) error {
+func (n *NetExt) Init() error {
 	n.setting = setting
 	n.SetInitialized()
 	return nil
@@ -20,7 +20,7 @@ func (n *NetExt) Init(setting Setting) error {
 // 需要保证双方的rule一致
 func (n *NetExt) AddDial(addr NetAddr, rule NetRule) error {
 	if !n.IsInitialized() {
-		return ErrNetExtNotInit
+		return errors.New("netext not init")
 	}
 	return nil
 }
@@ -29,7 +29,7 @@ func (n *NetExt) AddDial(addr NetAddr, rule NetRule) error {
 // 需要保证双方的rule一致
 func (n *NetExt) AddListen(addr NetAddr, rule NetRule) error {
 	if !n.IsInitialized() {
-		return ErrNetExtNotInit
+		return errors.New("netext not init")
 	}
 	return nil
 }

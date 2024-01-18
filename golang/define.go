@@ -14,18 +14,13 @@ type (
 type (
 	// NetKey 用来表示网络
 	NetKey struct {
-		NetType  NetType
-		ConnType ConnectType
-		NetID    uint32
+		NetType NetType
+		NetAddr NetAddr
 	}
 	// NetAddr 用来表示网络地址
 	NetAddr struct {
 		ConnType ConnectType
 		Addr     string
-	}
-	// Setting 主管理器的配置
-	Setting struct {
-		errorHandler func(error) // 用于处理错误
 	}
 	NetRule struct {
 		//NeedAuth 如果需要认证，那么在未认证状态仅允许收到认证消息，此后需要外部调用认证接口。客户端需要再连接后
@@ -35,24 +30,20 @@ type (
 		NeedHeart      bool
 		NeedRc4        bool // 认证阶段会交换rc4秘钥
 	}
-	ListenSetting struct {
-		HandleType HandleType
-		WorkerNum  int
-	}
+
 	Cmd uint16
 )
 
 const (
-	ConnTypeTcp ConnectType = iota
+	ConnTypeNull ConnectType = iota
+	ConnTypeTcp
 	ConnTypeKcp
 	ConnTypeUdp
 )
 
-// 错误相关
 const (
-	ErrNetExtNotInit = Error("NetExt: not init")
+	HandleTypeNull HandleType = iota
+	HandleTypeSingleThread
+	HandleTypeMultiThread
+	HandleWorkPool
 )
-
-type Error string
-
-func (e Error) Error() string { return string(e) }
