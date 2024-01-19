@@ -33,8 +33,6 @@ type (
 		NeedHeart      bool
 		NeedRc4        bool // 认证阶段会交换rc4秘钥
 	}
-
-	Cmd uint16
 )
 
 const (
