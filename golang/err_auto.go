@@ -26,8 +26,8 @@ const (
 	ErrAcceptFailed         = ErrStr("accept failed")          // auto generated from .\listenmgr.go
 	ErrNetextNotInit        = ErrStr("netext not init")        // auto generated from .\mgr.go
 	ErrMsgDataTooShort      = ErrStr("msg data too short")     // auto generated from .\msg.go
-	ErrConntypeAlreadyExist = ErrStr("connType already exist") // auto generated from .\netentity.go
-	ErrConntypeNotExist     = ErrStr("connType not exist")     // auto generated from .\netentity.go
+	ErrConnTypeAlreadyExist = ErrStr("connType already exist") // auto generated from .\netentity.go
+	ErrConnTypeNotExist     = ErrStr("connType not exist")     // auto generated from .\netentity.go
 	ErrWriteSizeFailed      = ErrStr("write size failed")      // auto generated from .\netentity.go
 	ErrWriteDataFailed      = ErrStr("write data failed")      // auto generated from .\netentity.go
 	ErrReadSizeFailed       = ErrStr("read size failed")       // auto generated from .\netentity.go

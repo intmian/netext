@@ -59,7 +59,7 @@ func (n *netEntity) AddConn(connType ConnectType, conn net.Conn) error {
 	n.lock.Lock()
 	defer n.lock.Unlock()
 	if _, ok := n.entityMap[connType]; ok {
-		return ErrConntypeAlreadyExist
+		return ErrConnTypeAlreadyExist
 	}
 	n.entityMap[connType] = conn
 	ctx, cancel := context.WithCancel(context.Background())
@@ -72,7 +72,7 @@ func (n *netEntity) DelConn(connType ConnectType) error {
 	n.lock.Lock()
 	defer n.lock.Unlock()
 	if _, ok := n.entityMap[connType]; !ok {
-		return ErrConntypeNotExist
+		return ErrConnTypeNotExist
 	}
 	n.cancelMap[connType]()
 	delete(n.entityMap, connType)
@@ -82,7 +82,7 @@ func (n *netEntity) DelConn(connType ConnectType) error {
 
 func (n *netEntity) Send(connType ConnectType, data []byte) error {
 	if _, ok := n.entityMap[connType]; !ok {
-		return ErrConntypeNotExist
+		return ErrConnTypeNotExist
 	}
 	if connType == ConnTypeTcp {
 		err := binary.Write(n.entityMap[connType], binary.BigEndian, uint16(len(data)))
