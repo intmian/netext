@@ -13,13 +13,18 @@ netEntityCtx 调用方相对于netEntity转入的上下文
 ctx 用于控制附属协程的生命周期
 onRec 用于处理接收到的数据。请注意回调是并发的
 onErr 用于处理错误。回调是并发的
-onGetNetPackBytes 用于获取一个可用的[]byte，等处理以后会通过回调返回
 */
 type netEntityCtx struct {
-	ctx               context.Context
-	onRec             func([]byte, int)
-	onErr             func(error)
-	onGetNetPackBytes func() []byte // 从上层获取一个可用的[]byte，等处理以后会通过回调返回
+	ctx   context.Context
+	onRec func([]byte, int)
+	onErr func(error)
+	//TODO: 如果性能或者gc出现瓶颈考虑
+	//onGetNetPackBytes func() []byte // 从上层获取一个可用的[]byte，等处理以后会通过回调返回
+	//onPutNetPackBytes func([]byte)  // 如果出现意外，需要将[]byte归还给上层
+}
+
+type netEntitySetting struct {
+	netPackSize int
 }
 
 /*
@@ -34,17 +39,19 @@ type netEntity struct {
 	cancelMap map[ConnectType]func()
 	lock      sync.Mutex
 	netEntityCtx
+	netEntitySetting
 }
 
-func (n *netEntity) Init(ctx netEntityCtx) {
+func (n *netEntity) Init(ctx netEntityCtx, s netEntitySetting) {
 	n.entityMap = make(map[ConnectType]net.Conn)
 	n.cancelMap = make(map[ConnectType]func())
 	n.netEntityCtx = ctx
+	n.netEntitySetting = s
 }
 
-func newNetEntity(ctx netEntityCtx) *netEntity {
+func newNetEntity(ctx netEntityCtx, s netEntitySetting) *netEntity {
 	n := &netEntity{}
-	n.Init(ctx)
+	n.Init(ctx, s)
 	return n
 }
 
@@ -98,37 +105,45 @@ func (n *netEntity) goRead(ctx context.Context, connType ConnectType, conn net.C
 			case <-ctx.Done():
 				return
 			default:
-				if connType == ConnTypeTcp {
-					// TCP 需要处理粘包的问题
-					size, err := conn.Read(sizePack)
-					if size != 2 {
-						n.onErr(ErrReadSizeFailed)
-						return
-					}
-					if err != nil {
-						n.onErr(errors.Join(err, ErrReadSizeFailed))
-						return
-					}
-					netPack := n.onGetNetPackBytes()
-					size, err = conn.Read(netPack)
-					if binary.BigEndian.Uint16(sizePack) != uint16(size) {
-						n.onErr(ErrReadNetpackFailed)
-					}
-					if err != nil {
-						n.onErr(errors.Join(err, ErrReadNetpackFailed))
-						return
-					}
-					n.onRec(netPack, size)
-				} else {
-					netPack := n.onGetNetPackBytes()
-					size, err := conn.Read(netPack)
-					if err != nil {
-						n.onErr(errors.Join(err, ErrReadNetpackFailed))
-						return
-					}
-					n.onRec(netPack, size)
+				if n.read(connType, conn, sizePack) {
+					return
 				}
 			}
 		}
 	}()
+}
+
+func (n *netEntity) read(connType ConnectType, conn net.Conn, sizePack []byte) bool {
+	if connType == ConnTypeTcp {
+		// TCP 需要处理粘包的问题
+		sizeBytes, err := conn.Read(sizePack)
+		if sizeBytes != 2 {
+			n.onErr(ErrReadSizeFailed)
+			return true
+		}
+		if err != nil {
+			n.onErr(errors.Join(err, ErrReadSizeFailed))
+			return true
+		}
+		size := int(binary.BigEndian.Uint16(sizePack))
+		netPack := make([]byte, n.netEntitySetting.netPackSize)
+		sizeBytes, err = conn.Read(netPack)
+		if size != sizeBytes {
+			n.onErr(ErrReadNetpackFailed)
+		}
+		if err != nil {
+			n.onErr(errors.Join(err, ErrReadNetpackFailed))
+			return true
+		}
+		n.onRec(netPack, sizeBytes)
+	} else {
+		netPack := make([]byte, n.netPackSize)
+		size, err := conn.Read(netPack)
+		if err != nil {
+			n.onErr(errors.Join(err, ErrReadNetpackFailed))
+			return true
+		}
+		n.onRec(netPack, size)
+	}
+	return false
 }

@@ -17,14 +17,12 @@ type (
 		OnErr 用于处理错误。并发。
 		OnEntityErr 用于处理某个网络实体的错误。上层根据策略选择应对。并发。
 		OnRec 用于处理接收到的数据。并发。
-		onGetNetPack 用于获取一个可用的[]byte。生命周期会在OnRec时转移给上层
 	*/
 	ConnContext struct {
 		context.Context
-		OnErr        func(err error)
-		OnEntityErr  func(key NetKey, err error)
-		OnRec        func(key NetKey, data []byte, size int)
-		onGetNetPack func() []byte
+		OnErr       func(err error)
+		OnEntityErr func(key NetKey, err error)
+		OnRec       func(key NetKey, data []byte, size int)
 	}
 )
 
@@ -86,12 +84,14 @@ func (c *ConnMgr) addEntity(key NetKey) {
 	}
 	ctx, cancel := context.WithCancel(c.ctx)
 	netCtx := netEntityCtx{
-		ctx:               ctx,
-		onRec:             onRec,
-		onErr:             onErr,
-		onGetNetPackBytes: c.ctx.onGetNetPack,
+		ctx:   ctx,
+		onRec: onRec,
+		onErr: onErr,
 	}
-	c.id2entity[key] = newNetEntity(netCtx)
+	setting := netEntitySetting{
+		netPackSize: c.setting.MaxNetPackSize,
+	}
+	c.id2entity[key] = newNetEntity(netCtx, setting)
 	c.id2cancel[key] = cancel
 }
 
