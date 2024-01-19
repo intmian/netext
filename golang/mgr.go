@@ -1,7 +1,6 @@
 package netext
 
 import (
-	"errors"
 	"github.com/intmian/mian_go_lib/tool/misc"
 )
 

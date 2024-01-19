@@ -1,8 +1,8 @@
 package netext
 
 import (
-	"github.com/intmian/mian_go_lib/tool/misc"
 	"errors"
+	"github.com/intmian/mian_go_lib/tool/misc"
 	"github.com/xtaci/kcp-go"
 	"net"
 )

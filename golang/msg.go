@@ -3,7 +3,6 @@ package netext
 import (
 	"encoding/binary"
 	"github.com/intmian/mian_go_lib/tool/misc"
-	"errors"
 )
 
 type MsgFlag uint16

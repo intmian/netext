@@ -2,9 +2,9 @@ package netext
 
 import (
 	"context"
+	"errors"
 	"github.com/intmian/mian_go_lib/tool/misc"
 	"github.com/intmian/netext/golang/mod"
-	"errors"
 	"github.com/xtaci/kcp-go"
 	"net"
 	"sync"
@@ -110,7 +110,7 @@ func (l *ListenMgr) Add(addr NetAddr, rule NetRule) error {
 	}
 	err = l.goListen(listen, ctx, rule)
 	if err != nil {
-		return errors.Join(err, ErrGolistenFailed)
+		return errors.Join(err, ErrGoListenFailed)
 	}
 	return nil
 }
