@@ -12,15 +12,18 @@ type (
 
 // 外部
 type (
-	// NetKey 用来表示网络
+	// NetID 用来表示网络ID
+	NetID uint64
+	// NetKey 用来表示网络逻辑层地址
 	NetKey struct {
 		NetType NetType
-		NetAddr NetAddr
+		ID      NetID
 	}
-	// NetAddr 用来表示网络地址
+	// NetAddr 用来表示网络地底层址
 	NetAddr struct {
 		ConnType ConnectType
-		Addr     string
+		IP       string
+		port     int
 	}
 	NetRule struct {
 		//NeedAuth 如果需要认证，那么在未认证状态仅允许收到认证消息，此后需要外部调用认证接口。客户端需要再连接后

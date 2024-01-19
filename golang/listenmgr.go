@@ -12,6 +12,12 @@ import (
 type ListenSetting struct {
 }
 
+/*
+ListenContext 调用方相对于listen转入的上下文。
+context.Context 用于控制附属协程的生命周期。
+OnErr 用于处理错误。请注意回调可能是并发的。
+OnAccept 用于处理新连接。请注意回调可能是并发的。接受新连接后，再进行鉴权或者基础通信获取NetType，和NetID
+*/
 type ListenContext struct {
 	context.Context
 	OnErr    func(err error)
@@ -19,19 +25,27 @@ type ListenContext struct {
 }
 
 type listener struct {
+	addr NetAddr
 	net.Listener
 	cancel func()
 	rule   NetRule
 }
 
+/*
+ListenMgr 管理监听，并将监听到的连接转发给调用方
+Init 后才能使用，不可重复调用
+Add 新增监听
+Close 关闭监听
+*/
 type ListenMgr struct {
 	setting  ListenSetting
 	Context  ListenContext
-	listener map[NetAddr]listener
+	listener map[string]listener
 
 	misc.InitTag
 }
 
+// Init 初始化
 func (l *ListenMgr) Init(s ListenSetting, c ListenContext) error {
 	if l.IsInitialized() {
 		return errors.New("ListenMgr already init")
@@ -42,6 +56,8 @@ func (l *ListenMgr) Init(s ListenSetting, c ListenContext) error {
 	return nil
 }
 
+// Add 新增监听 addr 地址，rule 规则。
+// 不能重复监听同一个地址
 func (l *ListenMgr) Add(addr NetAddr, rule NetRule) error {
 	// 校验
 	if !l.IsInitialized() {
@@ -51,62 +67,63 @@ func (l *ListenMgr) Add(addr NetAddr, rule NetRule) error {
 		return errors.New("addr invalid")
 	}
 
-	if _, ok := l.listener[addr]; ok {
+	if _, ok := l.listener[addr.GetAddr()]; ok {
 		return errors.New("addr already listen")
 	}
 
 	var listen net.Listener
 	var err error
-	ip, port := addr.GetIpAndPort()
 	switch addr.ConnType {
 	case ConnTypeTcp:
-		listen, err = net.Listen("tcp", addr.Addr)
+		listen, err = net.Listen("tcp", addr.GetAddr())
 		if err != nil {
 			return errors.WithMessage(err, "listen tcp failed")
 		}
 	case ConnTypeKcp:
-		listen, err = kcp.Listen(addr.Addr)
+		listen, err = kcp.Listen(addr.GetAddr())
 		if err != nil {
 			return errors.WithMessage(err, "listen kcp failed")
 		}
 	case ConnTypeUdp:
 		listen, err = mod.ListenUdp(mod.UdpListenerSetting{
-			IP:   ip,
-			Port: port,
+			IP:   addr.IP,
+			Port: addr.port,
 		})
 	default:
 		return errors.New("conn type not support")
 	}
 	ctx, cancel := context.WithCancel(l.Context)
-	l.listener[addr] = listener{
+	l.listener[addr.GetAddr()] = listener{
+		addr:     addr,
 		Listener: listen,
 		cancel:   cancel,
 		rule:     rule,
 	}
-	err = l.GoListen(listen, ctx, rule)
+	err = l.goListen(listen, ctx, rule)
 	if err != nil {
-		return errors.WithMessage(err, "GoListen failed")
+		return errors.WithMessage(err, "goListen failed")
 	}
 	return nil
 }
 
+// Close 关闭监听
 func (l *ListenMgr) Close(addr NetAddr) error {
 	if !l.IsInitialized() {
 		return errors.New("ListenMgr not init")
 	}
-	if _, ok := l.listener[addr]; !ok {
+	if _, ok := l.listener[addr.GetAddr()]; !ok {
 		return errors.New("addr not listen")
 	}
-	l.listener[addr].cancel()
-	err := l.listener[addr].Close()
-	delete(l.listener, addr)
+	l.listener[addr.GetAddr()].cancel()
+	err := l.listener[addr.GetAddr()].Close()
+	delete(l.listener, addr.GetAddr())
 	if err != nil {
 		return errors.WithMessage(err, "close failed")
 	}
 	return nil
 }
 
-func (l *ListenMgr) GoListen(listener net.Listener, ctx context.Context, rule NetRule) error {
+func (l *ListenMgr) goListen(listener net.Listener, ctx context.Context, rule NetRule) error {
 	go func() {
 		for {
 			select {
