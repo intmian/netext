@@ -20,7 +20,7 @@ func (n *NetExt) Init() error {
 // 需要保证双方的rule一致
 func (n *NetExt) AddDial(addr NetAddr, rule NetRule) error {
 	if !n.IsInitialized() {
-		return errors.New("netext not init")
+		return ErrNetextNotInit
 	}
 	return nil
 }
@@ -29,7 +29,7 @@ func (n *NetExt) AddDial(addr NetAddr, rule NetRule) error {
 // 需要保证双方的rule一致
 func (n *NetExt) AddListen(addr NetAddr, rule NetRule) error {
 	if !n.IsInitialized() {
-		return errors.New("netext not init")
+		return ErrNetextNotInit
 	}
 	return nil
 }

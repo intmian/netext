@@ -4,12 +4,19 @@ import (
 	"context"
 	"github.com/intmian/mian_go_lib/tool/misc"
 	"github.com/intmian/netext/golang/mod"
-	"github.com/pkg/errors"
+	"errors"
 	"github.com/xtaci/kcp-go"
 	"net"
+	"sync"
 )
 
 type ListenSetting struct {
+}
+
+type IListenMgr interface {
+	Init(s ListenSetting, c ListenContext) error
+	Add(addr NetAddr, rule NetRule) error
+	Close(addr NetAddr) error
 }
 
 /*
@@ -41,14 +48,14 @@ type ListenMgr struct {
 	setting  ListenSetting
 	Context  ListenContext
 	listener map[string]listener
-
+	mu       sync.Mutex
 	misc.InitTag
 }
 
 // Init 初始化
 func (l *ListenMgr) Init(s ListenSetting, c ListenContext) error {
 	if l.IsInitialized() {
-		return errors.New("ListenMgr already init")
+		return ErrListenMgrAlreadyInit
 	}
 	l.setting = s
 	l.Context = c
@@ -59,16 +66,18 @@ func (l *ListenMgr) Init(s ListenSetting, c ListenContext) error {
 // Add 新增监听 addr 地址，rule 规则。
 // 不能重复监听同一个地址
 func (l *ListenMgr) Add(addr NetAddr, rule NetRule) error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
 	// 校验
 	if !l.IsInitialized() {
-		return errors.New("ListenMgr not init")
+		return ErrListenMgrNotInit
 	}
 	if !addr.IsValid() {
-		return errors.New("addr invalid")
+		return ErrAddrInvalid
 	}
 
 	if _, ok := l.listener[addr.GetAddr()]; ok {
-		return errors.New("addr already listen")
+		return ErrAddrAlreadyListen
 	}
 
 	var listen net.Listener
@@ -77,12 +86,12 @@ func (l *ListenMgr) Add(addr NetAddr, rule NetRule) error {
 	case ConnTypeTcp:
 		listen, err = net.Listen("tcp", addr.GetAddr())
 		if err != nil {
-			return errors.WithMessage(err, "listen tcp failed")
+			return errors.Join(err, ErrListenTcpFailed)
 		}
 	case ConnTypeKcp:
 		listen, err = kcp.Listen(addr.GetAddr())
 		if err != nil {
-			return errors.WithMessage(err, "listen kcp failed")
+			return errors.Join(err, ErrListenKcpFailed)
 		}
 	case ConnTypeUdp:
 		listen, err = mod.ListenUdp(mod.UdpListenerSetting{
@@ -90,7 +99,7 @@ func (l *ListenMgr) Add(addr NetAddr, rule NetRule) error {
 			Port: addr.port,
 		})
 	default:
-		return errors.New("conn type not support")
+		return ErrConnTypeNotSupport
 	}
 	ctx, cancel := context.WithCancel(l.Context)
 	l.listener[addr.GetAddr()] = listener{
@@ -101,7 +110,7 @@ func (l *ListenMgr) Add(addr NetAddr, rule NetRule) error {
 	}
 	err = l.goListen(listen, ctx, rule)
 	if err != nil {
-		return errors.WithMessage(err, "goListen failed")
+		return errors.Join(err, ErrGolistenFailed)
 	}
 	return nil
 }
@@ -109,16 +118,18 @@ func (l *ListenMgr) Add(addr NetAddr, rule NetRule) error {
 // Close 关闭监听
 func (l *ListenMgr) Close(addr NetAddr) error {
 	if !l.IsInitialized() {
-		return errors.New("ListenMgr not init")
+		return ErrListenMgrNotInit
 	}
+	l.mu.Lock()
+	defer l.mu.Unlock()
 	if _, ok := l.listener[addr.GetAddr()]; !ok {
-		return errors.New("addr not listen")
+		return ErrAddrNotListen
 	}
 	l.listener[addr.GetAddr()].cancel()
 	err := l.listener[addr.GetAddr()].Close()
 	delete(l.listener, addr.GetAddr())
 	if err != nil {
-		return errors.WithMessage(err, "close failed")
+		return errors.Join(err, ErrCloseFailed)
 	}
 	return nil
 }
@@ -133,7 +144,7 @@ func (l *ListenMgr) goListen(listener net.Listener, ctx context.Context, rule Ne
 			}
 			conn, err := listener.Accept()
 			if err != nil {
-				l.Context.OnErr(errors.WithMessage(err, "accept failed"))
+				l.Context.OnErr(errors.Join(err, ErrAcceptFailed))
 				continue
 			}
 			l.Context.OnAccept(conn, rule)
