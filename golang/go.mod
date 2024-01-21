@@ -1,9 +1,9 @@
 module github.com/intmian/netext/golang
 
-go 1.21.1
+go 1.21
 
 require (
-	github.com/intmian/mian_go_lib v0.0.0-20240119023732-ae03df2b1920 // indirect
+	github.com/intmian/mian_go_lib v0.0.0-20240119075710-08627e550c56 // indirect
 	github.com/klauspost/cpuid/v2 v2.1.1 // indirect
 	github.com/klauspost/reedsolomon v1.12.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

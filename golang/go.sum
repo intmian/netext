@@ -27,6 +27,8 @@ github.com/intmian/mian_go_lib v0.0.0-20240112074931-901f1c577d87 h1:2YycRSznkVq
 github.com/intmian/mian_go_lib v0.0.0-20240112074931-901f1c577d87/go.mod h1:v4TDtaRtFnSGaF5meYEvDFD+lJlTqoFT05VZR8vGIWE=
 github.com/intmian/mian_go_lib v0.0.0-20240119023732-ae03df2b1920 h1:ZFKpAyLu/JZn33qP4f6CbjKda2dGMVGS20+EQ8GG1Es=
 github.com/intmian/mian_go_lib v0.0.0-20240119023732-ae03df2b1920/go.mod h1:v4TDtaRtFnSGaF5meYEvDFD+lJlTqoFT05VZR8vGIWE=
+github.com/intmian/mian_go_lib v0.0.0-20240119075710-08627e550c56 h1:u6/6hM99nbWrIjogFJTf8jcH6Fx1UR1fhexzcqGn06I=
+github.com/intmian/mian_go_lib v0.0.0-20240119075710-08627e550c56/go.mod h1:v4TDtaRtFnSGaF5meYEvDFD+lJlTqoFT05VZR8vGIWE=
 github.com/klauspost/cpuid/v2 v2.1.1 h1:t0wUqjowdm8ezddV5k0tLWVklVuvLJpoHeb4WBdydm0=
 github.com/klauspost/cpuid/v2 v2.1.1/go.mod h1:RVVoqg1df56z8g3pUjL/3lE5UfnlrJX8tyFgg4nqhuY=
 github.com/klauspost/reedsolomon v1.12.0 h1:I5FEp3xSwVCcEh3F5A7dofEfhXdF/bWhQWPH+XwBFno=
