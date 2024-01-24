@@ -43,8 +43,8 @@ const (
 )
 
 const (
-	HandleTypeNull HandleType = iota
-	HandleTypeSingleThread
-	HandleTypeMultiThread
-	HandleWorkPool
+	HandleTypeNull      HandleType = iota
+	HandleTypeModThread            // 由固定的线程处理，线程号为NetID % 线程数量
+	HandleTypeWorkPool             // 由协程池处理
+	HandleTypeOutHandle            // 由外部驱动
 )
