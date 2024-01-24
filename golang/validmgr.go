@@ -23,9 +23,9 @@ type IValidMgr interface {
 	// IsNeedValid 此路由是否需要鉴权
 	IsNeedValid(netType NetType, cmd CmdEnum) bool
 	// Valid 鉴权成功
-	Valid(netType NetType, cmd CmdEnum, key NetKey) error
+	Valid(key NetKey) error
 	// UnValid 需要某个网络实体的鉴权
-	UnValid(netType NetType, cmd CmdEnum, key NetKey) error
+	UnValid(key NetKey) error
 	// IsValid 是否鉴权成功
 	IsValid(netType NetType, cmd CmdEnum, key NetKey) bool
 }
