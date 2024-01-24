@@ -35,6 +35,8 @@ const (
 	ErrKeyNotExist          = ErrStr("key not exist")          // auto generated from .\connmgr.go
 	ErrCancelNotExist       = ErrStr("cancel not exist")       // auto generated from .\connmgr.go
 	ErrSendFailed           = ErrStr("send failed")            // auto generated from .\connmgr.go
+	ErrValidMgrAlreadyInit  = ErrStr("ValidMgr already init")  // auto generated from .\validmgr.go
+	ErrValidMgrNotInit      = ErrStr("ValidMgr not init")      // auto generated from .\validmgr.go
 )
 
 func (e ErrStr) Error() string { return string(e) }

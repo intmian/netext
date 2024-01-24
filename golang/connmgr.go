@@ -19,20 +19,25 @@ type (
 		OnRec 用于处理接收到的数据。并发。
 	*/
 	ConnContext struct {
-		context.Context
+		ctx         context.Context
 		OnErr       func(err error)
 		OnEntityErr func(key NetKey, err error)
 		OnRec       func(key NetKey, data []byte, size int)
 	}
 )
 
+// IConnMgr 管理连接，负责连接的读写。收到数据后会调用OnRec返回上层。
+// 支持新增网络实体的某一个类型的链接，或者断开全部链接
 type IConnMgr interface {
+	// Init 初始化
 	Init(s ConnSetting, c ConnContext) error
+	// AddConn 增加连接
 	AddConn(key NetKey, connType ConnectType, conn ConnMgr) error
+	// DelConn 删除连接
 	DelConn(key NetKey) error
-	//TODO: 考虑下有没有必要 DelConnByType(connType ConnectType) error
-
+	// Send 发送数据
 	Send(key NetKey, connType ConnectType, data []byte) error
+	//TODO: 考虑下有没有必要 DelConnByType(connType ConnectType) error
 }
 
 /*
@@ -82,7 +87,7 @@ func (c *ConnMgr) addEntity(key NetKey) {
 	onErr := func(err error) {
 		c.ctx.OnEntityErr(key, err)
 	}
-	ctx, cancel := context.WithCancel(c.ctx)
+	ctx, cancel := context.WithCancel(c.ctx.ctx)
 	netCtx := netEntityCtx{
 		ctx:   ctx,
 		onRec: onRec,

@@ -10,25 +10,31 @@ import (
 	"sync"
 )
 
-type ListenSetting struct {
-}
+type (
+	ListenSetting struct {
+	}
 
+	/*
+	   ListenContext 调用方相对于listen转入的上下文。
+	   context.Context 用于控制附属协程的生命周期。
+	   OnErr 用于处理错误。请注意回调可能是并发的。
+	   OnAccept 用于处理新连接。请注意回调可能是并发的。接受新连接后，再进行鉴权或者基础通信获取NetType，和NetID
+	*/
+	ListenContext struct {
+		ctx      context.Context
+		OnErr    func(err error)
+		OnAccept func(conn net.Conn, rule NetRule)
+	}
+)
+
+// IListenMgr 监听管理器，并将监听到的连接转发给调用方
 type IListenMgr interface {
+	// Init 初始化
 	Init(s ListenSetting, c ListenContext) error
+	// Add 新增监听
 	Add(addr NetAddr, rule NetRule) error
+	// Close 关闭监听
 	Close(addr NetAddr) error
-}
-
-/*
-ListenContext 调用方相对于listen转入的上下文。
-context.Context 用于控制附属协程的生命周期。
-OnErr 用于处理错误。请注意回调可能是并发的。
-OnAccept 用于处理新连接。请注意回调可能是并发的。接受新连接后，再进行鉴权或者基础通信获取NetType，和NetID
-*/
-type ListenContext struct {
-	context.Context
-	OnErr    func(err error)
-	OnAccept func(conn net.Conn, rule NetRule)
 }
 
 type listener struct {
@@ -101,7 +107,7 @@ func (l *ListenMgr) Add(addr NetAddr, rule NetRule) error {
 	default:
 		return ErrConnTypeNotSupport
 	}
-	ctx, cancel := context.WithCancel(l.Context)
+	ctx, cancel := context.WithCancel(l.Context.ctx)
 	l.listener[addr.GetAddr()] = listener{
 		addr:     addr,
 		Listener: listen,
