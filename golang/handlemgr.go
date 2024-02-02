@@ -11,10 +11,14 @@ type (
 		NetType NetType
 		Cmd     CmdEnum
 	}
-	Handler       func(ID NetID, msg Msg, ctx HandleContext) error
+	Handler       func(key NetKey, msg Msg, ctx HandleContext) error
 	HandleContext struct {
 		Ctx          context.Context
 		OnDisconnect func()
+
+		InitEntityValue func(interface{})  // 初始化本实体对应的数据，不是mod线程模式，此函数不可用。必须传入指针。
+		GetEntityValue  func() interface{} // 获取本实体对应的数据，不是mod线程模式，此函数不可用。
+		GetThreadValue  func() interface{} // 获取本线程对应的数据，不是mod线程模式，此函数不可用。要需要在启动前初始化
 	}
 	HandleMgrSetting struct {
 		handleType HandleType // 目前所有NetType的handleType都是一样的，后续有需求再拓展，建议当前在业务层组合
@@ -22,16 +26,21 @@ type (
 		queueSize  int        // 队列大小，在外部接管模式下特别有用
 	}
 	MsgMgrContext struct {
-		Ctx          context.Context
-		OnErr        func(err error)
-		OnWarn       func(str string)
-		OnPanic      func(err error)  // 协程发生错误会recover
+		Ctx context.Context
+
+		OnErr   func(err error)
+		OnWarn  func(str string)
+		OnPanic func(err error) // 协程发生错误会recover
+
 		OnDisConnect func(key NetKey) // 网络实体断开连接
 	}
 )
 
 type IHandleMgr interface {
 	Init(s HandleMgrSetting, c MsgMgrContext) error
+	InitThread(data interface{}) error
+
+	Run() error
 
 	AddRouter(router CmdRouterKey, handle Handler) error
 	DelRouter(router CmdRouterKey) error

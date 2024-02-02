@@ -44,7 +44,7 @@ const (
 
 const (
 	HandleTypeNull      HandleType = iota
-	HandleTypeModThread            // 由固定的线程处理，线程号为NetID % 线程数量
+	HandleTypeModThread            // 由固定的线程处理，线程号为NetID % 线程数量，建议配合无锁逻辑使用，将对应协程的数据封装在某个结构体下，无等待逻辑，有消息就会处理。建议配置线程数量为cpu超线程数量
 	HandleTypeWorkPool             // 由协程池处理
-	HandleTypeOutHandle            // 由外部驱动
+	HandleTypeOutHandle            // 由外部驱动，需要外部调用OnHandle，支持将数据隔离在多个队列中，建议同上，此外外部使用轮询+wait的方式驱动
 )
